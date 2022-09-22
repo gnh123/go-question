@@ -26,7 +26,7 @@ func main() {
 	0x0050 00080 (join-string-2.go:8)	CALL	runtime.concatstring2(SB) #调用concatstring2 进行字符串拼接
 ```
 
-从汇编里面可以得知, 调用了runtime里面的concatstring2函数，实际上调用的是concatstring2, 
+从汇编里面可以得知, 调用了runtime里面的concatstring2函数，实际上调用的是concatstrings, 
 该函数主要 有几步组成， 
 1. 先计算累加之后的总容量数
 2. 如果空字符串, 直接返回空串
@@ -139,8 +139,8 @@ func main() {
 	0x0318 00792 (join-string-mult.go:15)	CALL	runtime.concatstrings(SB)  #调用concatstrings进行字符串拼接
 ```
 
-* 这里故意构造一个大于tmpBuf长度的字符串，所以会触发mallocgc的逻辑
-逻辑调用是concatstrings->rawstring
+* 这里的结论和两个字符串拼接类似，上面的go代码故意构造10个字符串拼接，这是一个大于tmpBuf长度的字符串，所以会触发mallocgc的逻辑
+逻辑调用是concatstrings(tmpBuf, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)->rawstring
 ```go
 func rawstringtmp(buf *tmpBuf, l int) (s string, b []byte) {
 	if buf != nil && l <= len(buf) {
