@@ -45,4 +45,4 @@ func main() {
 	0x0020 00032 (new-string-dynamic.go:6)	PCDATA	$1, ZR
 	0x0020 00032 (new-string-dynamic.go:6)	CALL	runtime.newobject(SB) #调用runtime包下面的newobject分配头
 ```
-* 从上面的汇编可以看到如果是通过 new函数，会调用runtime.newobject函数
+* 从上面的汇编可以看到如果是通过 new函数，会调用runtime.newobject函数动态分配内存
