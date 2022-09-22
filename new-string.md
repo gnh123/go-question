@@ -40,9 +40,28 @@ func main() {
 * 从上面的汇编可以看到如果是静态声明的字符串静态，是在程序里面硬编码的，通过SB（静态基址寄存器可以引用）不会调用malloc之类的函数。
 
 ## 观察动态声明字符串变量
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := new(string)
+	*s1 = "hello"
+
+	fmt.Printf("%p\n", s1)
+}
+```
+
 ```
 	0x0018 00024 (new-string-dynamic.go:6)	MOVD	$type.string(SB), R0  #把string放至r0中
 	0x0020 00032 (new-string-dynamic.go:6)	PCDATA	$1, ZR
 	0x0020 00032 (new-string-dynamic.go:6)	CALL	runtime.newobject(SB) #调用runtime包下面的newobject分配头
 ```
 * 从上面的汇编可以看到如果是通过 new函数，会调用runtime.newobject函数动态分配内存
+
+```go
+func newobject(typ *_type) unsafe.Pointer {
+	return mallocgc(typ.size, typ, true)
+}
+```

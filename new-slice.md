@@ -1,7 +1,7 @@
 # 新建一个slice发生了啥？
 
 ## 来段golang的示例代码
-```
+```go
 package main
 
 import (
