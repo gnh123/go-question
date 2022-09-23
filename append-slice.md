@@ -236,3 +236,40 @@ func main() {
       // 省略
     }
 ```
+
+对于第3个疑问, 构造了如下的代码, 对于大对象，threshold, 近似提供1.25倍的新容量
+总结:
+对于threshold附近的大小也提供 3/4 * threshold, 托底，提供近乎翻倍扩容的效果。值越大就是1.25倍，值越小且接近threshold, 就近似翻倍
+`
+newcap += (newcap + 3*threshold) / 4
+`
+
+```go
+package main
+
+import "strings"
+
+func main() {
+	old := strings.Split(strings.Repeat("hello ", 256), " ")
+	new := append(old, "1234")
+	_ = new
+}
+```
+
+
+```go
+
+			// Check 0 < newcap to detect overflow
+			// and prevent an infinite loop.
+			for 0 < newcap && newcap < cap {
+				// Transition from growing 2x for small slices
+				// to growing 1.25x for large slices. This formula
+				// gives a smooth-ish transition between the two.
+				newcap += (newcap + 3*threshold) / 4
+			}
+			// Set newcap to the requested cap when
+			// the newcap calculation overflowed.
+			if newcap <= 0 {
+				newcap = cap
+			}
+```
