@@ -1,5 +1,7 @@
 ## 对slice调用append,是如何实现的？
 
+go version=1.19.1
+
 golang的代码是调用append，很常见的一个操作
 ```go
 package main
@@ -19,7 +21,7 @@ func main() {
 	0x004c 00076 (append-slice.go:4)	PCDATA	$1, ZR
 	0x004c 00076 (append-slice.go:4)	CALL	runtime.growslice(SB)
 ```
-调用append，先调用growslice分配一个需要的内存
+调用append，实际就是调用growslice分配一个需要的内存
 * old 是append第一个参数的slice
 * cap 是cap(old) + 还要新加的容量, 这也解释了 cap > doublecap直接把 cap 赋值给newcap
 ```go
@@ -184,6 +186,10 @@ func growslice(et *_type, old slice, cap int) slice {
 
 对于第1个疑问，构造了如下代码，growslice(type, old.cap=2，cap=7 (old.cap + 5), 满足`cap > doublecap`
 为啥这么设计也很简单，如果不停地用翻倍或者加1.n%试探需要的实际容易，会产生n次的执行，没有现在这种做法高效
+
+总结: 对于append函数来说，如果老的cap("hello" + "world")+新增部分("123", "456", "789", "abc", "def") = 7  > 2 * 2(old.cap) 就直接使用老的cap+新增部分，
+下面的例子就是2 * 2 < 7 所以就就直接使用7了。
+
 ```go
 package main
 
@@ -194,4 +200,39 @@ func main() {
 }
 ```
 
+```go
+newcap := old.cap
+	doublecap := newcap + newcap
+	if cap > doublecap {
+		newcap = cap
+	} else {
+    // 省略
+  }
+```
+
 对于第2个疑问，构造了如下代码
+解决第2个疑问，也构造了一段go的代码，growslice(type, old.cap=2, cap=3) 满足 ``` old.cap < threshold```
+总结: 对于cap(old.cap + 新增容易)小于两倍的old.cap，并且小于一个阈值，就使用翻倍策略, 简单来说就是小对象翻倍
+
+```go
+package main
+
+func main() {
+	old := []string{"hello", "world"}
+	new := append(old, "1234")
+	_ = new
+}
+
+```
+
+```
+	if cap > doublecap {
+		//省略
+	} else {
+		const threshold = 256
+		if old.cap < threshold {
+			newcap = doublecap
+		} else {
+      // 省略
+    }
+```
