@@ -237,9 +237,9 @@ func main() {
     }
 ```
 
-对于第3个疑问, 构造了如下的代码, 对于大对象，threshold, 近似提供1.25倍的新容量
+对于第3个疑问, 构造了如下的代码, 对于大对象(大于threshold), 近似提供1.25倍的新容量  
 总结:
-对于threshold附近的大小也提供 3/4 * threshold, 托底，提供近乎翻倍扩容的效果。值越大就是1.25倍，值越小且接近threshold, 就近似翻倍
+对于threshold附近的大小也提供 3/4 * threshold, 托底，提供近乎翻倍扩容的效果。值越大就是1.25倍，值越小且接近threshold, 就近似翻倍， 提供3/4 * threshold就是为了丝滑些。
 `
 newcap += (newcap + 3*threshold) / 4
 `
