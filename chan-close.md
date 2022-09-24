@@ -51,3 +51,42 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 ```
 
 ### 一个chan里面有数据被读取完，这时候关闭了，能取到数据吗？
+
+构造一个go的代码
+```go
+
+package main
+
+func main() {
+	c := make(chan string, 3)
+	c <- "1"
+	c <- "2"
+	close(c)
+	<-c
+}
+```
+对于一个被关闭的chan，并且还有数据，会执行如下逻辑。
+recvx计算器维护当前读取的索引位置, 队列长度qcount--, 
+typedmemmove就是把变量的值返回出去，比如y := <- c,  如何把c的变量给到y, 编译器会把y的地址给到chanrecv函数，只要知道元素的类型(这里的string是16字节)
+qp是被拷贝的数据指针，最后又变成朴实的memmove操作, 
+```go
+	if c.qcount > 0 {
+		// Receive directly from queue
+		qp := chanbuf(c, c.recvx)
+		if raceenabled {
+			racenotify(c, c.recvx, nil)
+		}
+		if ep != nil {
+			typedmemmove(c.elemtype, ep, qp)
+		}
+		typedmemclr(c.elemtype, qp)
+		c.recvx++
+		if c.recvx == c.dataqsiz {
+			c.recvx = 0
+		}
+		c.qcount--
+		unlock(&c.lock)
+		return true, true
+	}
+```
+
