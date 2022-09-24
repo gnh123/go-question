@@ -26,9 +26,9 @@ func main() {
 	0x00a4 00164 (copy-slice.go:6)	CALL	runtime.typedslicecopy(SB)
 ```
 
-typedslicecopy实现
+typedslicecopy实现  
 总结：copy其实调用的是memmove，每个平台都使用对应平台汇编实现, 对于长度，dstLen和srcLen都是元素的个数
-通过size := uintptr(n) * typ.size 转成字节数，最后一把memmove搞定
+通过size := uintptr(n) * typ.size 转成字节数，最后一把memmove 字节级别赋值搞定，c里面也有同名函数，功能类似。所以go的copy也是可以处理重叠区域的内存拷贝。
 ```go
 
 func typedslicecopy(typ *_type, dstPtr unsafe.Pointer, dstLen int, srcPtr unsafe.Pointer, srcLen int) int {
