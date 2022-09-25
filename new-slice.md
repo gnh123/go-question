@@ -1,5 +1,5 @@
 # 新建一个slice发生了啥？
-
+go version=1.19.1
 ## 来段golang的示例代码
 ```go
 package main
