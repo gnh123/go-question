@@ -50,6 +50,9 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 }
 ```
 
+总结:
+从源码上来看, 一个被关闭的空chan，就是检查下closed变量，所以读1w次也能立马返回
+
 ### 一个chan里面有数据被读取完，这时候关闭了，能取到数据吗？
 
 构造一个go的代码
@@ -90,3 +93,90 @@ qp是被拷贝的数据指针，最后又变成朴实的memmove操作,
 	}
 ```
 
+总结:
+能取到数据。如果chan被关闭了，只能数据都被取完，读端才知道这个chan被关闭了。
+
+### 一个被close的chan, 为啥能广播到所有的消费者?
+先构造一段测试代码, 了解下
+```
+package main
+
+import "sync"
+
+func main() {
+	c := make(chan bool)
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		<-c
+	}()
+	go func() {
+		defer wg.Done()
+		<-c
+	}()
+	close(c)
+	wg.Wait()
+}
+```
+
+从源代码上来说，一个chan 被close，置为1。在这段例子中，遍历recvq，这里有挂着的两个g程
+在加锁区域中取出来放临时变量中gList，最后遍历gList一一唤醒
+```go
+
+func closechan(c *hchan) {
+	if c == nil {
+		panic(plainError("close of nil channel"))
+	}
+
+	lock(&c.lock)
+	if c.closed != 0 {
+		unlock(&c.lock)
+		panic(plainError("close of closed channel"))
+	}
+
+	if raceenabled {
+		callerpc := getcallerpc()
+		racewritepc(c.raceaddr(), callerpc, abi.FuncPCABIInternal(closechan))
+		racerelease(c.raceaddr())
+	}
+
+	c.closed = 1
+
+	var glist gList
+
+	// release all readers
+	for {
+		sg := c.recvq.dequeue()
+		if sg == nil {
+			break
+		}
+		if sg.elem != nil {
+			typedmemclr(c.elemtype, sg.elem)
+			sg.elem = nil
+		}
+		if sg.releasetime != 0 {
+			sg.releasetime = cputicks()
+		}
+		gp := sg.g
+		gp.param = unsafe.Pointer(sg)
+		sg.success = false
+		if raceenabled {
+			raceacquireg(gp, c.raceaddr())
+		}
+		glist.push(gp)
+	}
+
+	// release all writers (they will panic)
+	// 省略。。。
+	unlock(&c.lock)
+
+	// Ready all Gs now that we've dropped the channel lock.
+	for !glist.empty() {
+		gp := glist.pop()
+		gp.schedlink = 0
+		goready(gp, 3)
+	}
+}
+```

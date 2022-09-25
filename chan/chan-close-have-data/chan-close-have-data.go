@@ -5,6 +5,11 @@ func main() {
 	c <- "1"
 	c <- "2"
 	close(c)
-	y := <-c
+	y, ok := <-c
+	println(ok)
+	y, ok = <-c
+	println(ok)
+	y, ok = <-c
+	println(ok)
 	_ = y
 }
