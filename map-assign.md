@@ -1,12 +1,8 @@
-## map
+## map assign
 go version=1.19.1
 
 map是go内置的数据结构，提供高速k/v存储访问，底层使用hashtable实现，对于这块代码也有一些疑问
 1. map set的执行流程
-2. map get的执行流程
-3. map delete的执行流程
-4. map 重新rehashing的执行流程
-5. map是挂链，还是其它方式解决冲突的？
 
 ## map set的执行流程
 ```go
@@ -42,7 +38,10 @@ val  val val val val val val val
 overflow  
 这么做个好处，内存紧凑，gc压力会小点  
 
-1. 
+1. 先根据key计算出槽位的指针，`b := (*bmap)(add(h.buckets, bucket*uintptr(t.bucketsize)))`
+2. 然后比较下tophash，tophash里面的flag会知道8个key/value对中哪个位置是可以存放新值的，这里得到inserti，这个位置如果已有值就会放入hash值的高8位。
+3. 如果当前的bmap有位置就可以保存，没有位置就从overflow里面找下一跳的bmap
+4. 计算偏移量，设置key,设置value
 ```go
 func mapassign_faststr(t *maptype, h *hmap, s string) unsafe.Pointer {
 	if h == nil {

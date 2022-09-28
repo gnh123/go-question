@@ -48,7 +48,7 @@ func main() {
 ```
 
 完整代码
-```
+```go
 func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
 	// raceenabled: don't need to check ep, as it is always on the stack
 	// or is new memory allocated by reflect.
