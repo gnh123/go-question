@@ -4,6 +4,7 @@ go version=1.19.1
 
 map是go内置的数据结构，提供高速k/v存储访问，底层使用hashtable实现，对于这块代码也有一些疑问
 1. map get的执行流程
+2. map是挂链，还是其它方式解决冲突的？
 
 ## map get的执行流程
 
@@ -173,3 +174,10 @@ dohash:
 	return unsafe.Pointer(&zeroVal[0])
 }
 ```
+
+## map解决冲突的方式  
+如果看明白get的方式流程，其实也能明白map解决冲突的方式  
+
+首先, map的bucket里面每个元素是bmap，是由8个key，8个val组成，这里面是顺序访问，
+如果8个位置都放满了，这里会存在到overflow里面
+所以。map是顺序存放+挂链解决冲突的。

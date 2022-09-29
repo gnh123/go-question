@@ -4,8 +4,6 @@ go version=1.19.1
 
 map是go内置的数据结构，提供高速k/v存储访问，底层使用hashtable实现，对于这块代码也有一些疑问
 1. map delete的执行流程
-3. map 重新rehashing的执行流程
-4. map是挂链，还是其它方式解决冲突的？
 
 ## map delete的流程
 
