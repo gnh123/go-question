@@ -20,7 +20,7 @@ readOnly和dirty都挂有同一个指针的value值，如果readOnly里面删除
 3. 从新构建脏map
 每次脏map都是从readOnly里面构建的，过滤掉删除的元素
 
-readOnly为啥快？
+readOnly为啥快？  
 主要依赖于对一个map没有并发读写，普通的map不需要加锁，由于sync.Map的读写分离设计，多个go程对map读也没问题
 value实现为atomic.Value也是为不加锁, 先挂有指针，再通过指针的atomic实现原子操作，不需要加锁
 
